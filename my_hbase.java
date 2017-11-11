@@ -13,6 +13,8 @@ import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.util.Bytes;
 public class my_hbase {
+    static private long prevTime = 0;
+    
     public static void main(String[] args) throws IOException, Exception {
         System.out.println("Hello HBase");
 	if (args.length > 2) {
@@ -23,6 +25,15 @@ public class my_hbase {
 
 	    // Scan for all time range
 	    ScanAllValues(hTable);
+
+	    // Read data in the polling manner
+	    // Use 100 polling times for testing and read the data for every 3 sec
+	    for (int i = 0; i < 100; i++) {
+   	        Thread.sleep(3000);
+		long currTime = System.currentTimeMillis();
+ 	        ScanAllValues(hTable, prevTime, currTime);
+		prevTime = currTime;
+	    }
 
 	    String rowKey = args[1];
 	    Get g = new Get(Bytes.toBytes(rowKey));
@@ -78,7 +89,7 @@ public class my_hbase {
 	ScanAllValuesHelper(hTable, scan);
     }
 
-    private static void ScanAllValues(Table hTable, Long minTime, Long maxTime) throws IOException, Exception {
+    private static void ScanAllValues(Table hTable, long minTime, long maxTime) throws IOException, Exception {
     	Scan scan = new Scan();
         scan.setTimeRange(minTime, maxTime);
 	ScanAllValuesHelper(hTable, scan);
