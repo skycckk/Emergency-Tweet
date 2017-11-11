@@ -18,26 +18,11 @@ public class my_hbase {
 	if (args.length > 2) {
 	    String tableName = args[0];
 	    Configuration conf = HBaseConfiguration.create();
-	    //HTable hTable = new HTable(conf, tableName);
 	    Connection conn = ConnectionFactory.createConnection(conf);
 	    Table hTable = conn.getTable(TableName.valueOf(tableName));
 
 	    // Scan for all time range
-	    Scan scan = new Scan();
-	    scan.setTimeRange(1510187688055L, 1510352640108L + 1L);
-	    byte[] startRow = scan.getStartRow();
-	    ResultScanner scanner = hTable.getScanner(scan);
-	    for (Result r = scanner.next(); (r != null); r = scanner.next()) {
-	        System.out.println("Current r value: " + Bytes.toString(r.getRow()));
-		List<Cell> cells = r.listCells();
-		System.out.println("cell numbers: " + cells.size());
-		for (Cell cell : cells) {
-		    int valueOffset = cell.getValueOffset();
-                    int valueLength = cell.getValueLength();
-                    byte[] value = Arrays.copyOfRange(cell.getValueArray(), valueOffset, valueOffset + valueLength);
-                    System.out.println("Value: " + Bytes.toString(value)); 
-		}
-	    }
+	    ScanAllValues(hTable);
 
 	    String rowKey = args[1];
 	    Get g = new Get(Bytes.toBytes(rowKey));
@@ -65,5 +50,20 @@ public class my_hbase {
             System.out.println("test date: " + d.toString());
 	    */
 	}
+    }
+    private static void ScanAllValues(Table hTable) throws IOException, Exception {
+	Scan scan = new Scan();
+	byte[] startRow = scan.getStartRow();
+   	 ResultScanner scanner = hTable.getScanner(scan);
+    	for (Result r = scanner.next(); (r != null); r = scanner.next()) {
+            System.out.println("Row key: " + Bytes.toString(r.getRow()));
+            List<Cell> cells = r.listCells();
+            for (Cell cell : cells) {
+                int valueOffset = cell.getValueOffset();
+            	int valueLength = cell.getValueLength();
+            	byte[] value = Arrays.copyOfRange(cell.getValueArray(), valueOffset, valueOffset + valueLength);
+            	System.out.println("Value: " + Bytes.toString(value));
+       	    }
+        }
     }
 }
