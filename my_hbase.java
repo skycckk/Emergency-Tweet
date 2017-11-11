@@ -59,19 +59,28 @@ public class my_hbase {
 	return hTable;
     }
 
-    private static void ScanAllValues(Table hTable) throws IOException, Exception {
-	Scan scan = new Scan();
-	byte[] startRow = scan.getStartRow();
-   	ResultScanner scanner = hTable.getScanner(scan);
-    	for (Result r = scanner.next(); (r != null); r = scanner.next()) {
+    private static void ScanAllValuesHelper(Table hTable, Scan scan) throws IOException, Exception {
+    	ResultScanner scanner = hTable.getScanner(scan);
+        for (Result r = scanner.next(); (r != null); r = scanner.next()) {
             System.out.println("Row key: " + Bytes.toString(r.getRow()));
             List<Cell> cells = r.listCells();
             for (Cell cell : cells) {
                 int valueOffset = cell.getValueOffset();
-            	int valueLength = cell.getValueLength();
-            	byte[] value = Arrays.copyOfRange(cell.getValueArray(), valueOffset, valueOffset + valueLength);
-            	System.out.println("Value: " + Bytes.toString(value));
-       	    }
+                int valueLength = cell.getValueLength();
+                byte[] value = Arrays.copyOfRange(cell.getValueArray(), valueOffset, valueOffset + valueLength);
+                System.out.println("Value: " + Bytes.toString(value));
+            }
         }
+    }
+
+    private static void ScanAllValues(Table hTable) throws IOException, Exception {
+	Scan scan = new Scan();
+	ScanAllValuesHelper(hTable, scan);
+    }
+
+    private static void ScanAllValues(Table hTable, Long minTime, Long maxTime) throws IOException, Exception {
+    	Scan scan = new Scan();
+        scan.setTimeRange(minTime, maxTime);
+	ScanAllValuesHelper(hTable, scan);
     }
 }
