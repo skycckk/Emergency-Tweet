@@ -17,9 +17,9 @@ public class my_hbase {
         System.out.println("Hello HBase");
 	if (args.length > 2) {
 	    String tableName = args[0];
-	    Configuration conf = HBaseConfiguration.create();
-	    Connection conn = ConnectionFactory.createConnection(conf);
-	    Table hTable = conn.getTable(TableName.valueOf(tableName));
+
+	    // Open a connection with a given table
+	    Table hTable = OpenConnection(tableName);
 
 	    // Scan for all time range
 	    ScanAllValues(hTable);
@@ -51,6 +51,14 @@ public class my_hbase {
 	    */
 	}
     }
+
+    private static Table OpenConnection(String tableName) throws IOException, Exception {
+	Configuration conf = HBaseConfiguration.create();
+        Connection conn = ConnectionFactory.createConnection(conf);
+        Table hTable = conn.getTable(TableName.valueOf(tableName));
+	return hTable;
+    }
+
     private static void ScanAllValues(Table hTable) throws IOException, Exception {
 	Scan scan = new Scan();
 	byte[] startRow = scan.getStartRow();
