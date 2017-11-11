@@ -1,1 +1,1 @@
-javac my_hbase.java
+javac -d classes/ my_hbase.java
