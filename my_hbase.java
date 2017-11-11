@@ -54,7 +54,7 @@ public class my_hbase {
     private static void ScanAllValues(Table hTable) throws IOException, Exception {
 	Scan scan = new Scan();
 	byte[] startRow = scan.getStartRow();
-   	 ResultScanner scanner = hTable.getScanner(scan);
+   	ResultScanner scanner = hTable.getScanner(scan);
     	for (Result r = scanner.next(); (r != null); r = scanner.next()) {
             System.out.println("Row key: " + Bytes.toString(r.getRow()));
             List<Cell> cells = r.listCells();
