@@ -1,5 +1,6 @@
+#!/usr/bin/python
+
 import happybase
-from twython import Twython
 
 from io import BytesIO
 import os
@@ -32,7 +33,10 @@ class Query:
         if not self.family_exist(cf):
             return
 
-        data = {(cf+':'+cf_q).encode('utf-8'): data_str.encode('utf-8')}
+        if data_str is None:
+            data = {(cf+':'+cf_q).encode('utf-8'): None}            
+        else:
+            data = {(cf+':'+cf_q).encode('utf-8'): data_str.encode('utf-8')}
         self.__tweets_table.put(row_key, data)
 
 
@@ -57,9 +61,12 @@ class Query:
             query_cfq = list()
             cf = columns[0]
             cf_q = columns[1]
-            for qualifiers in cf_q:
-                query_cfq.append((cf+':'+qualifiers).encode('utf-8'))
-
+            if len(cf_q) == 0:  # accept all qualifiers
+                query_cfq.append((cf).encode('utf-8'))
+            else:
+                for qualifiers in cf_q:
+                    query_cfq.append((cf+':'+qualifiers).encode('utf-8'))
+            
         scan = self.__tweets_table.scan(limit=limit, columns=query_cfq, filter=filter, 
                                         include_timestamp=include_timestamp)
         return scan
@@ -71,9 +78,10 @@ class Query:
         tables = connection.tables()
 
         # These are the table settings for Emergency Tweets
-        tweets_table_name = 'emergency_tweets'
+        # tweets_table_name = 'emergency_tweets'
+        tweets_table_name = 'help_trump'
         
-        families = {'cf:': dict()}
+        families = {'tweet:': dict(), 'datetime:': dict()}
         table_exists = False
         for table in tables:
             if table.decode() == tweets_table_name:
@@ -85,13 +93,6 @@ class Query:
         print(connection.tables())
 
         self.__tweets_table = connection.table(tweets_table_name)
-
-        CONSUMER_KEY = ''
-        CONSUMER_SECRET = ''
-        ACCESS_TOKEN = ''
-        ACCESS_SECRET = ''
-
-        twitter = Twython(CONSUMER_KEY,CONSUMER_SECRET,ACCESS_TOKEN, ACCESS_SECRET)
         return connection
 
 
@@ -106,11 +107,11 @@ if __name__ == '__main__':
     # This example do a simple query with a value filter
     # step1: scan qualified tuples and get the row keys
     print('*' * 10, 'Example1', '*' * 10)
-    scan = q.select_values(limit=10, columns=('cf', ['location']), 
+    scan = q.select_values(limit=10, columns=('tweet', ['location']), 
                            filter="ValueFilter(=, 'binary:San Jose, CA')")
 
     # step2: project values with the keys
-    column_family = 'cf'
+    column_family = 'tweet'
     qualifiers = ['name', 'coord_lat', 'coord_long', 'text']
     for row_key, row_data in scan:
         values = q.get_values(row_key, column_family, qualifiers)
@@ -129,10 +130,23 @@ if __name__ == '__main__':
         values = q.get_values(row_key, column_family, qualifiers)
         print(values)
 
+    # Example 2.5
+    # This example shows how to do a range search
+    print('*' * 10, 'Example2.5', '*' * 10)
+    filter_str = "SingleColumnValueFilter('datetime', 'year', =, 'binary:2017', true, false) AND \
+                  SingleColumnValueFilter('datetime', 'month', =, 'binary:12', true, false) AND \
+                  SingleColumnValueFilter('datetime', 'day', >, 'binary:01', true, false)"
+    scan = q.select_values(limit=10, columns=('datetime', []), filter=filter_str)
+    qualifiers = ['name']
+    for row_key, row_data in scan:
+        print(row_key)
+        values = q.get_values(row_key, column_family, qualifiers)
+        print(values)
+
     # Example 3
     # Insert data
-    q.put_value(b'0001', 'cf', 'test_q1', '1234')
-    q.put_value(b'0001', 'cf', 'test_q2', '5678')
-    q.put_value(b'0001', 'cf2', 'test_q1', '1111')  # this will fail because cf2 does not exist
+    print('*' * 10, 'Example3', '*' * 10)
+    q.put_value(b'0001', 'tweet', 'test_q1', '1234')
+    q.put_value(b'0001', 'tweet', 'test_q2', '5678')
+    q.put_value(b'0001', 'tweet2', 'test_q1', '1111')  # this will fail because tweet2 does not exist
     
-
