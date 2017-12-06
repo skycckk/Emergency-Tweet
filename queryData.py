@@ -23,6 +23,11 @@ class Query:
 
 
     def family_exist(self, cf):
+        """
+        Test if the given column familiy exists.
+        :param cf: string. Column family name
+        :return: True if it exists
+        """
         if cf.encode('utf-8') in self.__tweets_table.families().keys():
             return True
         else:
@@ -30,6 +35,13 @@ class Query:
 
 
     def put_value(self, row_key, cf, cf_q, data_str):
+        """
+        Put data record in HBase with key and column family, qualifiers.
+        :param row_key: byte array. Row key with type of byte array
+        :param cf: string. Column family name
+        :param cf_q: string. Column qualifier
+        :param data_str: string. The data to put inserted
+        """
         if not self.family_exist(cf):
             return
 
@@ -41,6 +53,14 @@ class Query:
 
 
     def get_values(self, row_key, cf, cf_q):
+        """
+        Get values with a specific row key in HBase.
+        :param row_key: byte array. Row key with type of byte array
+        :param cf: string. Column family name.
+        :param cf_q: list. A list of column qualifier string.
+        :return: dictionay. The result with the key is cf:cf_q and the value is values.
+                Those are decoded in type of string.
+        """
         if not self.family_exist(cf):
             return
 
@@ -56,6 +76,16 @@ class Query:
 
 
     def select_values(self, limit=None, columns=None, filter=None, include_timestamp=False):
+        """
+        Perform a SELECT query.
+        :param limit: int. This number limits the number of results will be displayed
+        :param columns: tuple. First element is the name of column family. Second element is a list of qualifiers.
+                If the second element is [], then it will be treated as all qualifiers.
+        :param filter: string. The filter followed the filtering format in HBase
+        :param include_timestamp: boolean. Set true if you want to get the result with a timestamp
+                Default is false.
+        :return: Iterable Scan object. Get all selected row keys and row data(dict format)
+        """
         query_cfq = None
         if columns is not None:
             query_cfq = list()
@@ -73,6 +103,9 @@ class Query:
 
 
     def init_hbase(self):
+        """
+        Initialize HBase and create the connection
+        """
         connection = happybase.Connection('localhost', autoconnect=False)
         connection.open()
         tables = connection.tables()
